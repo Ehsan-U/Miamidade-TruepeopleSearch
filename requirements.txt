@@ -1,0 +1,6 @@
+pandas
+openpyxl
+pyarrow
+scrapy
+scrapy-zyte-api
+python-dotenv
