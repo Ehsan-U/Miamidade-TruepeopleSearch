@@ -12,3 +12,4 @@ test.py
 *.mp4
 *.zip
 *.csv
+launch.json
