@@ -37,13 +37,13 @@ class MiamiDade(scrapy.Spider):
 				"actual_area": data.get("PropertyInfo", {}).get("BuildingGrossArea"),
 				"living_area": data.get("PropertyInfo", {}).get("BuildingHeatedArea"),
 				"adjusted_area": data.get("PropertyInfo", {}).get("BuildingEffectiveArea"),
-				"market_value": data.get("Taxable", {}).get("TaxableInfos", [{}])[0].get("SchoolTaxableValue"),
-				"assessed_value": data.get("Taxable", {}).get("TaxableInfos", [{}])[0].get("CountyTaxableValue"),
+				"market_value": next(iter(data.get("Taxable", {}).get("TaxableInfos", [{}])), {}).get("SchoolTaxableValue"),
+				"assessed_value": next(iter(data.get("Taxable", {}).get("TaxableInfos", [{}])), {}).get("CountyTaxableValue"),
 				**{
-					"year_built": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("Actual"),
-					"actual_sqft": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("GrossArea"),
-					"living_sqft": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("HeatedArea"),
-					"calc_value": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("DepreciatedValue"),
+					"year_built": next(iter(data.get("Building", {}).get("BuildingInfos", [{}])), {}).get("Actual"),
+					"actual_sqft": next(iter(data.get("Building", {}).get("BuildingInfos", [{}])), {}).get("GrossArea"),
+					"living_sqft": next(iter(data.get("Building", {}).get("BuildingInfos", [{}])), {}).get("HeatedArea"),
+					"calc_value": next(iter(data.get("Building", {}).get("BuildingInfos", [{}])), {}).get("DepreciatedValue"),
 				}
 			}
 			url = f"https://miamidade.county-taxes.com/public/real_estate/parcels/{data.get('PropertyInfo', {}).get('FolioNumber').replace('-','')}"
