@@ -21,7 +21,11 @@ class TruePeopleSearch(scrapy.Spider):
         "FEEDS": {"output.csv": {
                 "format": "csv", 
                 "overwrite": True,
-                "fields": ["name", "age", "birth_year", "street", "city", "region", "zipcode", "phone-1", "phone-2", "phone-3", "phone-4", "phone-5"]
+                "fields": ["name", "age", "birth_year", "street", "city", "region", "zipcode", "phone-1", "phone-2", "phone-3", "phone-4", "phone-5",
+                           "property_address","mailing_address","primary_land_use","actual_area","living_area","adjusted_area","market_value",
+                           "assessed_value","year_built","actual_sqft","living_sqft","calc_value","tax_1_bill","tax_1_amount_due","tax_1_amount_paid",
+                           "tax_1_status","tax_2_bill","tax_2_amount_due","tax_2_amount_paid","tax_2_status","tax_3_bill","tax_3_amount_due",
+                           "tax_3_amount_paid","tax_3_status"]
             }
         }
     }
