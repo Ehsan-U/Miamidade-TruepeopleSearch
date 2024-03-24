@@ -31,7 +31,7 @@ class MiamiDade(scrapy.Spider):
 		data = json.loads(response.text)
 		if data:
 			item = {
-				"address": self.get_address(data),
+				**self.get_address(data),
 				"owners": self.get_owners(data),
 				"primary_land_use": f'{data.get("PropertyInfo", {}).get("DORCode")} {data.get("PropertyInfo", {}).get("DORDescription")}',
 				"actual_area": data.get("PropertyInfo", {}).get("BuildingGrossArea"),
@@ -39,7 +39,7 @@ class MiamiDade(scrapy.Spider):
 				"adjusted_area": data.get("PropertyInfo", {}).get("BuildingEffectiveArea"),
 				"market_value": data.get("Taxable", {}).get("TaxableInfos", [{}])[0].get("SchoolTaxableValue"),
 				"assessed_value": data.get("Taxable", {}).get("TaxableInfos", [{}])[0].get("CountyTaxableValue"),
-				"building_information": {
+				**{
 					"year_built": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("Actual"),
 					"actual_sqft": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("GrossArea"),
 					"living_sqft": data.get("Building", {}).get("BuildingInfos", [{}])[0].get("HeatedArea"),
@@ -84,7 +84,7 @@ class MiamiDade(scrapy.Spider):
 			taxes.append(sub_item) if sub_item else None
 			if len(taxes) == 3:
 				break
-		item['property_taxes'] = taxes
+		item['tax'] = taxes
 		return item
 
 
@@ -118,3 +118,20 @@ class MiamiDade(scrapy.Spider):
 			url = f"https://www.miamidade.gov/Apps/PA/PApublicServiceProxy/PaServicesProxy.ashx?Operation=GetAddress&clientAppName=PropertySearch&myUnit=&from=1&myAddress={address}&to=200"
 			urls.append(url)
 		return urls
+	
+
+	def flatten(self, d, parent_key='', sep='_'):
+		items = []
+		for k, v in d.items():
+			new_key = f"{parent_key}{sep}{k}" if parent_key else k
+			if isinstance(v, dict):
+				items.extend(self.flatten(v, new_key, sep=sep).items())
+			elif isinstance(v, list):
+				for i, item in enumerate(v, 1):
+					if isinstance(item, dict):
+						items.extend(self.flatten(item, f"{new_key}_{i}", sep=sep).items())
+					else:
+						items.append((f"{new_key}_{i}", item))
+			else:
+				items.append((new_key, v))
+		return dict(items)

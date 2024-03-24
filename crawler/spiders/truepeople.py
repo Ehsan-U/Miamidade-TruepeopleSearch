@@ -1,5 +1,5 @@
 import logging
-from typing import Iterable, List
+from typing import Dict, Iterable, List
 from urllib.parse import urlencode
 import pandas as pd
 import scrapy
@@ -31,10 +31,10 @@ class TruePeopleSearch(scrapy.Spider):
         self.remaining = len(persons)
         for person in persons:
             name, url = self.build_url(person)
-            yield scrapy.Request(url, callback=self.parse, cb_kwargs={"name": name})
+            yield scrapy.Request(url, callback=self.parse, cb_kwargs={"name": name, "record": person['record']})
 
 
-    def parse(self, response: Response, name: str):
+    def parse(self, response: Response, name: str, record: Dict):
         """
         parse the results page
         """
@@ -46,7 +46,7 @@ class TruePeopleSearch(scrapy.Spider):
             for person in persons[:1]:
                 link = person.xpath("./@href").get()
                 url = response.urljoin(link)
-                yield scrapy.Request(url, callback=self.parse_person)
+                yield scrapy.Request(url, callback=self.parse_person, cb_kwargs={"record": record})
         else:
             yield {
                 "name": name,
@@ -61,10 +61,11 @@ class TruePeopleSearch(scrapy.Spider):
                 "phone-3": None,
                 "phone-4": None,
                 "phone-5": None,
+                **record
             }
 
 
-    def parse_person(self, response: Response):
+    def parse_person(self, response: Response, record: Dict):
         """ 
         parse the person profile page 
         """
@@ -81,6 +82,7 @@ class TruePeopleSearch(scrapy.Spider):
             "phone-3": None,
             "phone-4": None,
             "phone-5": None,
+            **record
         }
 
         phones = list(set(response.xpath("//span[@itemprop='telephone']/text()").getall()))
@@ -92,18 +94,20 @@ class TruePeopleSearch(scrapy.Spider):
         return item
 
     
-    @staticmethod
-    def load_input() -> List:
+    def load_input(self) -> List:
         queries = []
         df = pd.read_json("miamidade.json")
         for idx, row in df.iterrows():
-            print(row)
             for owner in row.get("owners", []):
+                record = row.to_dict()
+                record.pop("owners")
+                record = self.flatten(record)
                 query = {
                     "name": owner,
-                    "city": row['address']['city'],
-                    "state": row['address']['state'],
-                    "zipcode": ''
+                    "city": row['city'],
+                    "state": row['state'],
+                    "zipcode": '',
+                    "record": record
                 }
                 queries.append(query)
         return queries
@@ -116,3 +120,20 @@ class TruePeopleSearch(scrapy.Spider):
         params = {"name":query.get("name"), "citystatezip": city_state or zipcode}
         url = f"https://www.truepeoplesearch.com/results?{urlencode(params)}"
         return (query.get("name"), url)
+    
+
+    def flatten(self, d, parent_key='', sep='_'):
+        items = []
+        for k, v in d.items():
+            new_key = f"{parent_key}{sep}{k}" if parent_key else k
+            if isinstance(v, dict):
+                items.extend(self.flatten(v, new_key, sep=sep).items())
+            elif isinstance(v, list):
+                for i, item in enumerate(v, 1):
+                    if isinstance(item, dict):
+                        items.extend(self.flatten(item, f"{new_key}_{i}", sep=sep).items())
+                    else:
+                        items.append((f"{new_key}_{i}", item))
+            else:
+                items.append((new_key, v))
+        return dict(items)
