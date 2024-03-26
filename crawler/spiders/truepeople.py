@@ -35,7 +35,6 @@ class TruePeopleSearch(scrapy.Spider):
         self.remaining = len(persons)
         for person in persons:
             name, url = self.build_url(person)
-            url = "https://www.truepeoplesearch.com/results?name=Emilio%20D%20Ribaldo"
             yield scrapy.Request(url, callback=self.parse, cb_kwargs={"name": name, "record": person['record']})
 
 
