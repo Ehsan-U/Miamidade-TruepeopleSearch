@@ -52,21 +52,8 @@ class TruePeopleSearch(scrapy.Spider):
                 url = response.urljoin(link)
                 yield scrapy.Request(url, callback=self.parse_person, cb_kwargs={"record": record})
         else:
-            yield {
-                "name": name,
-                "age": None,
-                "birth_year": None,
-                "street": None,
-                "city": None,
-                "region": None,
-                "zipcode": None,
-                "phone-1": None,
-                "phone-2": None,
-                "phone-3": None,
-                "phone-4": None,
-                "phone-5": None,
-                **record
-            }
+            self.logger.info(f"Skipped: {name}")
+            yield None
 
 
     def parse_person(self, response: Response, record: Dict):
