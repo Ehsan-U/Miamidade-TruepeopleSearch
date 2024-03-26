@@ -35,6 +35,7 @@ class TruePeopleSearch(scrapy.Spider):
         self.remaining = len(persons)
         for person in persons:
             name, url = self.build_url(person)
+            url = "https://www.truepeoplesearch.com/results?name=Emilio%20D%20Ribaldo"
             yield scrapy.Request(url, callback=self.parse, cb_kwargs={"name": name, "record": person['record']})
 
 
@@ -77,6 +78,8 @@ class TruePeopleSearch(scrapy.Spider):
         }
 
         phones = list(set(response.xpath("//span[@itemprop='telephone']/text()").getall()))
+        if not phones:
+            return None
         for idx, phone in enumerate(phones, start=1):
             item[f"phone-{idx}"] = phone
             if idx == 5:
